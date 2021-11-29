@@ -95,13 +95,18 @@ def plot_MSE(b_list):
     plt.plot(b_list, q_list)
     plt.show()
 
-def quantize_maxlloyd(decisions,representations):
-    quantized = []
-    for i in range(len(decisions)-1):
-        start = decisions[i]
-        end = max(decisions[i],decisions[i+1]-1)
-        quantized.extend([representations[i]]*(end-start+1))
-    return quantized
+# def quantize_maxlloyd(decisions,representations):
+#     quantized = []
+#     for i in range(len(decisions)-1):
+#         start = decisions[i]
+#         end = max(decisions[i],decisions[i+1]-1)
+#         quantized.extend([representations[i]]*(end-start+1))
+#     return quantized
+
+def quantize_maxlloyd(decisions,representations, x) -> int:
+    for i in range(len(decisions)):
+        if decisions[i] > x:
+            return representations[i-1]
 
 
 def plot_max_lloyd(b_list,epsilon,hist):
@@ -118,9 +123,12 @@ def plot_max_lloyd(b_list,epsilon,hist):
     plt.plot(b_list,error)
     plt.show()
     for i in range(len(b_list)):
-        plt.plot(hist[1][:-1],quantize_maxlloyd(decisions[i],representations[i]))
+        # plt.plot(hist[1][:-1],quantize_maxlloyd(decisions[i],representations[i]))
+        # plt.show()
+    
+        r_list = [quantize_maxlloyd(decisions[i], representations[i], x) for x in range(256)]
+        plt.plot(hist[1][:-1], r_list)
         plt.show()
-
 
 if __name__ == '__main__':
     img_path = './HW1/lena_gray.gif'
