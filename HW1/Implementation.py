@@ -1,6 +1,32 @@
 from matplotlib import pyplot as plt
 import numpy as np
 
+class MaxLloyd():
+    
+    def __init__(epsilon,hist,decisions):
+        self.pdf = hist
+        self.epsilon = epsilon
+        self.decisions = decisions
+        self.error = None
+        self.representations = None
+
+    def calc_representation(self) -> list:
+        return
+
+    def calc_decisions(self) -> list:
+        return
+
+    def calc_errors(self):
+        return
+
+    def WorkFlow(self):
+        while self.error > self.epsilon:
+            self.representations = self.calc_representation()
+            self.decisions = self.calc_decisions()
+            self.error = self.calc_error()
+        return (self.representations, self.decisions)
+
+
 def uniform_quantize_function(low, delta, x):
     return low+((np.floor(((x-low)/delta))+(1/2))*delta)
 
