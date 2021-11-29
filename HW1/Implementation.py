@@ -3,18 +3,20 @@ import numpy as np
 
 class MaxLloyd():
     
-    def __init__(epsilon,hist,decisions):
+    def __init__(self, epsilon,hist,decisions):
         self.pdf = hist
         self.epsilon = epsilon
         self.decisions = decisions
         self.error = None
         self.representations = None
+        self.k = len(decisions) - 1
 
     def calc_representation(self) -> list:
-        return
+        return []
 
     def calc_decisions(self) -> list:
-        return
+        return [0] + [(self.representations[i] + self.representations[i+1])/2 for i in range(self.k)] + [self.hist[1][-1]]
+        
 
     def calc_errors(self):
         return
