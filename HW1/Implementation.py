@@ -95,6 +95,15 @@ def plot_MSE(b_list):
     plt.plot(b_list, q_list)
     plt.show()
 
+def quantize_maxlloyd(decisions,representations):
+    quantized = []
+    for i in range(len(decisions)-1):
+        start = decisions[i]
+        end = max(decisions[i],decisions[i+1]-1)
+        quantized.extend([representations[i]]*(end-start+1))
+    return quantized
+
+
 def plot_max_lloyd(b_list,epsilon,hist):
     decisions = []
     representations = []
@@ -106,7 +115,11 @@ def plot_max_lloyd(b_list,epsilon,hist):
         decisions.append(list(d))
         representations.append(list(r))
         error.append(max_lloyd.error)
-    pass
+    plt.plot(b_list,error)
+    plt.show()
+    for i in range(len(b_list)):
+        plt.plot(hist[1][:-1],quantize_maxlloyd(decisions[i],representations[i]))
+        plt.show()
 
 
 if __name__ == '__main__':
