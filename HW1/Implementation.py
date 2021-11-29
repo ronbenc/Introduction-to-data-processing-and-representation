@@ -88,26 +88,16 @@ def plot_MSE(b_list):
         quantized_img = uniform_quantize(grayscale_img,bit,0,256)
         q_list.append(compute_MSE(grayscale_img, quantized_img))
         
-        # decisions.append(dec_and_reps[0])
-        # representations.append(dec_and_reps[1])
-        # plt.imshow(quantized_img,'gray')
-        # plt.show()
     plt.plot(b_list, q_list)
+    plt.title('MSE as a function of the bit-budget')
+    plt.xlabel('number of bits')
+    plt.ylabel('Mean Squared Error')
     plt.show()
-
-# def quantize_maxlloyd(decisions,representations):
-#     quantized = []
-#     for i in range(len(decisions)-1):
-#         start = decisions[i]
-#         end = max(decisions[i],decisions[i+1]-1)
-#         quantized.extend([representations[i]]*(end-start+1))
-#     return quantized
 
 def quantize_maxlloyd(decisions,representations, x) -> int:
     for i in range(len(decisions)):
         if decisions[i] > x:
             return representations[i-1]
-
 
 def plot_max_lloyd(b_list,epsilon,hist):
     decisions = []
@@ -121,6 +111,9 @@ def plot_max_lloyd(b_list,epsilon,hist):
         representations.append(list(r))
         error.append(max_lloyd.error)
     plt.plot(b_list,error)
+    plt.title('MSE as a function of the bit-budget')
+    plt.xlabel('number of bits')
+    plt.ylabel('Mean Squared Error')
     plt.show()
     for i in range(len(b_list)):
         # plt.plot(hist[1][:-1],quantize_maxlloyd(decisions[i],representations[i]))
@@ -135,13 +128,16 @@ if __name__ == '__main__':
     img = plt.imread(img_path)
     grayscale_img = img[:,:,0]
     hist = plt.hist(grayscale_img.ravel(),bins=256,range=[0,256])
+    plt.ylabel('count')
+    plt.xlabel('pixel value')
+    plt.title('Grayscale Histogram')
     plt.show()
     max_num_bits = 8
 
     b_list = [bits for bits in range(1,max_num_bits+1)]
 
-    # #2.1
-    # plot_MSE(b_list)
+    #2.1
+    plot_MSE(b_list)
 
     # #2.b
     # plot_reps_and_dec(b_list)
