@@ -4,29 +4,30 @@ import numpy as np
 class MaxLloyd():
     
     def __init__(self, epsilon,hist,decisions):
-        self.pdf = hist
+        self.hist = hist
         self.epsilon = epsilon
-        self.decisions = decisions
+        self.d = decisions
         self.error = None
-        self.representations = None
+        self.r = None
         self.k = len(decisions) - 1
 
     def calc_representation(self) -> list:
-        return []
+        return [(self.hist[0][self.d[i]:self.d[i+1]]*self.hist[1][self.d[i]:self.d[i+1]].sum())/self.hist[0][self.d[i]:self.d[i+1]].sum() for i in range(self.k)]
 
     def calc_decisions(self) -> list:
-        return [0] + [(self.representations[i] + self.representations[i+1])/2 for i in range(self.k)] + [self.hist[1][-1]]
+        return [0] + [(self.r[i] + self.r[i+1])/2 for i in range(self.k)] + [self.hist[1][-1]]
         
 
     def calc_errors(self):
+        
         return
 
     def WorkFlow(self):
         while self.error > self.epsilon:
-            self.representations = self.calc_representation()
-            self.decisions = self.calc_decisions()
+            self.r = self.calc_representation()
+            self.d = self.calc_decisions()
             self.error = self.calc_error()
-        return (self.representations, self.decisions)
+        return (self.r, self.d)
 
 
 def uniform_quantize_function(low, delta, x):
