@@ -1,6 +1,10 @@
 from matplotlib import pyplot as plt
 import numpy as np
 
+
+def my_round(x):
+    epsilon = 0.0000001
+    return np.round(x+epsilon)
 class MaxLloyd():
     
     def __init__(self, epsilon,hist,decisions):
@@ -13,10 +17,23 @@ class MaxLloyd():
         self.k = len(decisions) - 1
         
     def calc_representation(self) -> list:
-        return [int(np.round((self.hist[0][self.d[i]:self.d[i+1]]*self.hist[1][self.d[i]:self.d[i+1]]).sum()/max(1,self.hist[0][self.d[i]:self.d[i+1]].sum()))) for i in range(self.k)]
+        reps = []
+        for i in range(self.k):
+            elements_in_range = self.hist[0][self.d[i]:self.d[i+1]-1].sum()
+            if elements_in_range == 0:
+                reps.append(int(my_round((self.d[i]+self.d[i+1])/2)))
+            else:
+                # x_in_range = self.hist[0][self.d[i]:self.d[i+1]-1]
+                # hist_in_range = self.hist[1][self.d[i]:self.d[i+1]-1]
+                # reps.append((x_in_range*hist_in_range).sum()/elements_in_range)
+                start = self.d[i]
+                end = max(self.d[i],self.d[i+1]-1)
+                reps.append(int(my_round((self.hist[0][start:end]*self.hist[1][start:end]).sum()/elements_in_range)))
+        return reps
+        # return [int(my_round((self.hist[0][self.d[i]:self.d[i+1]]*self.hist[1][self.d[i]:self.d[i+1]]).sum()/max(1,self.hist[0][self.d[i]:self.d[i+1]].sum()))) for i in range(self.k)]
 
     def calc_decisions(self) -> list:
-        return [0] + [int(np.round((self.r[i] + self.r[i+1])/2)) for i in range(self.k-1)] + [int(self.hist[1][-1])]
+        return [0] + [int(my_round((self.r[i] + self.r[i+1])/2)) for i in range(self.k-1)] + [int(self.hist[1][-1])]
         
 
     def calc_error(self):
@@ -35,7 +52,7 @@ class MaxLloyd():
             self.error = self.calc_error()
             if old_error is not None and old_error - self.error < self.epsilon:
                 break
-        return (self.r, self.d)
+        return (list(self.r), list(self.d))
 
 
 def uniform_quantize_function(low, delta, x):
@@ -83,9 +100,9 @@ def plot_max_lloyd(b_list,epsilon,hist):
     representations = []
     error = []
     for bit in b_list:
-        decisions,_ = get_decisions_and_representations(bit,0,256)
-        max_lloyd = MaxLloyd(epsilon,hist,decisions)
-        d,r = max_lloyd.WorkFlow()
+        init_decision,_ = get_decisions_and_representations(bit,0,256)
+        max_lloyd = MaxLloyd(epsilon,hist,init_decision)
+        r,d = max_lloyd.WorkFlow()
         decisions.append(list(d))
         representations.append(list(r))
         error.append(max_lloyd.error)
