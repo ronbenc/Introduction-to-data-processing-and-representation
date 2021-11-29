@@ -77,9 +77,10 @@ def get_decisions_and_representations(num_bits,low,high):
 
 def plot_reps_and_dec(b_list):
     x = [i for i in range(0,256)]
-    for bit in b_list:
-        plt.plot(x,uniform_quantize(np.array(x),bit,0,256))
-        plt.show()
+    fig,axs = plt.subplots(len(b_list),figsize=(15,5))
+    for i,bit in enumerate(b_list):
+        axs[i].plot(x,uniform_quantize(np.array(x),bit,0,256))
+    plt.show()
 
 def plot_MSE(b_list):
     q_list = []
@@ -141,10 +142,10 @@ if __name__ == '__main__':
     b_list = [bits for bits in range(1,max_num_bits+1)]
 
     # #2.1
-    # plot_MSE(b_list)
+    plot_MSE(b_list)
 
     # #2.b
-    # plot_reps_and_dec(b_list)
+    plot_reps_and_dec(b_list)
 
     plot_max_lloyd(b_list,0.001,hist)
 
