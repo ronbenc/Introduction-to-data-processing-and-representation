@@ -5,21 +5,21 @@ class MaxLloyd():
     
     def __init__(self, epsilon,hist,decisions):
         self.hist = hist
-        self.pdf = hist / hist[0].sum
+        self.pdf = hist[0] / hist[0].sum()
         self.epsilon = epsilon
-        self.d = decisions
+        self.d = np.array(decisions).astype(int)
         self.error = None
         self.r = None
         self.k = len(decisions) - 1
-
+        
     def calc_representation(self) -> list:
-        return [(self.hist[0][self.d[i]:self.d[i+1]]*self.hist[1][self.d[i]:self.d[i+1]].sum())/self.hist[0][self.d[i]:self.d[i+1]].sum() for i in range(self.k)]
+        return [int(np.round((self.hist[0][self.d[i]:self.d[i+1]]*self.hist[1][self.d[i]:self.d[i+1]]).sum()/max(1,self.hist[0][self.d[i]:self.d[i+1]].sum()))) for i in range(self.k)]
 
     def calc_decisions(self) -> list:
-        return [0] + [(self.r[i] + self.r[i+1])/2 for i in range(self.k)] + [self.hist[1][-1] + 1]
+        return [0] + [int(np.round((self.r[i] + self.r[i+1])/2)) for i in range(self.k-1)] + [int(self.hist[1][-1])]
         
 
-    def calc_errors(self):
+    def calc_error(self):
         error_sum = 0
         for i in range(self.k):
             for x in range(self.d[i], self.d[i+1]):
@@ -28,10 +28,13 @@ class MaxLloyd():
         return error_sum
 
     def WorkFlow(self):
-        while self.error > self.epsilon:
+        while True:
             self.r = self.calc_representation()
             self.d = self.calc_decisions()
+            old_error = self.error
             self.error = self.calc_error()
+            if old_error is not None and old_error - self.error < self.epsilon:
+                break
         return (self.r, self.d)
 
 
@@ -48,9 +51,11 @@ def compute_MSE(orig_img, q_img):
     N = orig_img.ravel().shape[0]
     return (np.power((orig_img-q_img).astype(float), 2)).sum()/N
 
-def get_decisions_and_representations(delta,k,low):
-    decisions = [low+i*delta for i in range(0,k+1)]
-    representations = [low + (i-(1/2))*delta for i in range(1,k+1)]
+def get_decisions_and_representations(num_bits,low,high):
+    k = 2**num_bits
+    delta = (high-low)/k
+    decisions = [int(low+i*delta) for i in range(0,k+1)]
+    representations = [int(low + (i-(1/2))*delta) for i in range(1,k+1)]
     return (decisions,representations)
 
 def plot_reps_and_dec(b_list):
@@ -73,23 +78,40 @@ def plot_MSE(b_list):
     plt.plot(b_list, q_list)
     plt.show()
 
+def plot_max_lloyd(b_list,epsilon,hist):
+    decisions = []
+    representations = []
+    error = []
+    for bit in b_list:
+        decisions,_ = get_decisions_and_representations(bit,0,256)
+        max_lloyd = MaxLloyd(epsilon,hist,decisions)
+        d,r = max_lloyd.WorkFlow()
+        decisions.append(list(d))
+        representations.append(list(r))
+        error.append(max_lloyd.error)
+    pass
+
+
 if __name__ == '__main__':
     img_path = './HW1/lena_gray.gif'
     img = plt.imread(img_path)
     grayscale_img = img[:,:,0]
-    plt.hist(grayscale_img.ravel(),bins=256,range=[0,256])
+    hist = plt.hist(grayscale_img.ravel(),bins=256,range=[0,256])
     plt.show()
     max_num_bits = 8
 
     b_list = [bits for bits in range(1,max_num_bits+1)]
 
-    #2.1
-    plot_MSE(b_list)
+    # #2.1
+    # plot_MSE(b_list)
 
-    #2.b
-    plot_reps_and_dec(b_list)
+    # #2.b
+    # plot_reps_and_dec(b_list)
 
-    
+    plot_max_lloyd(b_list,0.001,hist)
+
+
+
    
 
 
