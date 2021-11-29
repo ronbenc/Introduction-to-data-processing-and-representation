@@ -5,6 +5,7 @@ class MaxLloyd():
     
     def __init__(self, epsilon,hist,decisions):
         self.hist = hist
+        self.pdf = hist / hist[0].sum
         self.epsilon = epsilon
         self.d = decisions
         self.error = None
@@ -15,12 +16,16 @@ class MaxLloyd():
         return [(self.hist[0][self.d[i]:self.d[i+1]]*self.hist[1][self.d[i]:self.d[i+1]].sum())/self.hist[0][self.d[i]:self.d[i+1]].sum() for i in range(self.k)]
 
     def calc_decisions(self) -> list:
-        return [0] + [(self.r[i] + self.r[i+1])/2 for i in range(self.k)] + [self.hist[1][-1]]
+        return [0] + [(self.r[i] + self.r[i+1])/2 for i in range(self.k)] + [self.hist[1][-1] + 1]
         
 
     def calc_errors(self):
+        error_sum = 0
+        for i in range(self.k):
+            for x in range(self.d[i], self.d[i+1]):
+                error_sum += (((x-self.r[i])**2)*self.pdf[x])
         
-        return
+        return error_sum
 
     def WorkFlow(self):
         while self.error > self.epsilon:
