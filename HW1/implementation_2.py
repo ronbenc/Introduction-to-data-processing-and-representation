@@ -19,7 +19,7 @@ class SubSampler:
     
     def subsample(self):
         self.error = 0
-        
+
         for row in range(self.subsampled_shape[0]):
             for column in range(self.subsampled_shape[1]):
                 error , value = self.compute(self.img[self.d*row:self.d*(row+1),self.d*column:self.d*(column+1)])
@@ -51,6 +51,12 @@ class MADSubSampler(SubSampler):
         median = int(np.median(sub_img))
         error_sum = (sub_img-median).sum()
         return error_sum,median
+
+def plot_MSE():
+    ...
+    
+def plot_MAD():
+    ...
 
 if __name__ == '__main__':
     img_path = './HW1/lena_gray.gif'
