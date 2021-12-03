@@ -81,7 +81,7 @@ def plot_sampling(img, Sampler):
 
 def plot_reconstructed(reconstructed_list):
 
-    fig,axs = plt.subplots(4, 2)
+    fig, axs = plt.subplots(4, 2)
     for i, reconstructed_img in enumerate(reconstructed_list):
         axs[i%4,int(i/4)].imshow(reconstructed_img,'gray', vmin = 0, vmax = 255)
         axs[i%4,int(i/4)].set_title('sub-sampling factor = {}'.format((2**(i+1))))

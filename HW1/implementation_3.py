@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 import numpy as np
+from implementation_2 import MADSubSampler
 
 class IRLS:
     def __init__(self, f, N, epsilon, p = 1,delta =0.0000001) -> None:
@@ -58,7 +59,20 @@ if __name__ == '__main__':
 
     signal = grayscale_img/255
 
-    irls = IRLS(signal,(2**4),10000,p=4)
-    irls.workflow()
-    plt.imshow(irls.g,'gray',vmin=0,vmax=1)
-    plt.show()
+    
+    for k in range(1, 9):
+        N = 2**k
+
+        irls = IRLS(signal, N, 0.001, p=1)
+        irls.workflow()
+
+        mad_subsampler = MADSubSampler(grayscale_img, 2**(9-k))
+        mad_subsampler.subsample()
+
+
+        fig, axs = plt.subplots(1, 2)
+
+        axs[0].imshow(irls.g,'gray',vmin=0,vmax=1)
+        axs[0].set_title("IRLS")
+        axs[1].imshow(mad_subsampler.reconstructed_img,'gray',vmin=0,vmax=255)
+        plt.show()
