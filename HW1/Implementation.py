@@ -77,10 +77,15 @@ def get_decisions_and_representations(num_bits,low,high):
 
 def plot_reps_and_dec(b_list):
     x = [i for i in range(0,256)]
-    fig,axs = plt.subplots(len(b_list),figsize=(15,5))
+    fig,axs = plt.subplots(4, 2)
     for i,bit in enumerate(b_list):
-        axs[i].plot(x,uniform_quantize(np.array(x),bit,0,256))
+        axs[i%4,int(i/4)].plot(x,uniform_quantize(np.array(x),bit,0,256))
+        axs[i%4,int(i/4)].set_title('number of bits = {}'.format(bit))
+        axs[i%4,int(i/4)].set_xlabel('desicision levels')
+        axs[i%4,int(i/4)].set_ylabel('representation levels')
+        
     plt.show()
+    
 
 def plot_MSE(b_list):
     q_list = []
@@ -116,13 +121,18 @@ def plot_max_lloyd(b_list,epsilon,hist):
     plt.xlabel('number of bits')
     plt.ylabel('Mean Squared Error')
     plt.show()
-    for i in range(len(b_list)):
-        # plt.plot(hist[1][:-1],quantize_maxlloyd(decisions[i],representations[i]))
-        # plt.show()
     
+    x = [i for i in range(0,256)]
+    fig,axs = plt.subplots(4, 2)
+    for i,bit in enumerate(b_list):
         r_list = [quantize_maxlloyd(decisions[i], representations[i], x) for x in range(256)]
-        plt.plot(hist[1][:-1], r_list)
-        plt.show()
+        axs[i%4,int(i/4)].plot(hist[1][:-1], r_list)
+        axs[i%4,int(i/4)].set_title('number of bits = {}'.format(bit))
+        axs[i%4,int(i/4)].set_xlabel('desicision levels')
+        axs[i%4,int(i/4)].set_ylabel('representation levels')
+        
+    # fig.title('Decision and representation levels for representative b values')
+    plt.show()
 
 if __name__ == '__main__':
     img_path = './HW1/lena_gray.gif'
@@ -137,14 +147,10 @@ if __name__ == '__main__':
 
     b_list = [bits for bits in range(1,max_num_bits+1)]
 
-<<<<<<< HEAD
     #2.1
-=======
-    # #2.1
->>>>>>> tmp
     plot_MSE(b_list)
 
-    # #2.b
+    #2.b
     plot_reps_and_dec(b_list)
 
     plot_max_lloyd(b_list,0.001,hist)
