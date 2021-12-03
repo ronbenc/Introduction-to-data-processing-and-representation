@@ -37,36 +37,46 @@ class SubSampler:
 class MSESubSampler(SubSampler):
     def __init__(self, img, d) -> None:
         super().__init__(img, d)
+        self.name = "MSE"
 
     def compute(self,sub_img):
-        mean = int(sub_img.mean())
-        error_sum = (sub_img-mean).sum()
-        return error_sum,mean
+        mean = sub_img.mean()
+        error_sum = ((sub_img-mean)**2).sum()
+        return error_sum, int(mean)
 
 class MADSubSampler(SubSampler):
     def __init__(self, img, d) -> None:
         super().__init__(img, d)
+        self.name = "MAD"
 
     def compute(self,sub_img):
-        median = int(np.median(sub_img))
-        error_sum = (sub_img-median).sum()
-        return error_sum,median
+        median = np.median(sub_img)
+        error_sum = (np.abs(sub_img-median)).sum()
+        return error_sum, int(median)
 
-def plot_MSE():
-    d_list = [2^i for i in range(1,9)]
+def plot_sampling(img, Sampler):
+    d_list = [2**i for i in range(1,9)]
+    error_list = []
     fig,axs = plt.subplots(4, 2)
-    for i,bit in enumerate(d_list):
-        axs[i%4,int(i/4)].plot()
-        axs[i%4,int(i/4)].set_title('number of bits = {}'.format(bit))
-        axs[i%4,int(i/4)].set_xlabel('desicision levels')
-        axs[i%4,int(i/4)].set_ylabel('representation levels')
+    for i, d in enumerate(d_list):
+        subsampler = Sampler(img, d)
+        sub_sampled_img = subsampler.subsample()
+        error_list.append(subsampler.error)
+        axs[i%4,int(i/4)].imshow(sub_sampled_img,'gray', vmin = 0, vmax = 255)
+        axs[i%4,int(i/4)].set_title('sub-sampling factor = {}'.format(d))
 
-def plot_MAD():
-    ...
+    plt.show()
+    plt.plot(d_list, error_list)
+    plt.title(subsampler.name)
+    plt.xlabel("sub-sampling factor D")
+    plt.ylabel("error")
+    plt.show()
+
 
 if __name__ == '__main__':
     img_path = './HW1/lena_gray.gif'
     img = plt.imread(img_path)
     grayscale_img = img[:,:,0]
 
-    mse = MSESubSampler(img, 2)
+    plot_sampling(grayscale_img, MSESubSampler)
+    plot_sampling(grayscale_img, MADSubSampler)
