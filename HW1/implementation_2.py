@@ -10,6 +10,7 @@ class SubSampler:
         self.subsampled_shape = tuple([int(i/d) for i in self.img_shape])
         self.subsampled_img = np.zeros(self.subsampled_shape)
         self.error = 0
+        self.reconstructed_img = np.zeros_like(img)
 
     
 
@@ -25,6 +26,7 @@ class SubSampler:
                 error , value = self.compute(self.img[self.d*row:self.d*(row+1),self.d*column:self.d*(column+1)])
                 self.subsampled_img[row,column] = value
                 self.error = self.error + error
+                self.reconstructed_img[self.d*row:self.d*(row+1),self.d*column:self.d*(column+1)] = value
 
         self.error = self.error/len(self.img.ravel())
         return self.subsampled_img
@@ -57,10 +59,12 @@ class MADSubSampler(SubSampler):
 def plot_sampling(img, Sampler):
     d_list = [2**i for i in range(1,9)]
     error_list = []
+    reconstructed_list = []
     fig,axs = plt.subplots(4, 2)
     for i, d in enumerate(d_list):
         subsampler = Sampler(img, d)
         sub_sampled_img = subsampler.subsample()
+        reconstructed_list.append(subsampler.reconstructed_img)
         error_list.append(subsampler.error)
         axs[i%4,int(i/4)].imshow(sub_sampled_img,'gray', vmin = 0, vmax = 255)
         axs[i%4,int(i/4)].set_title('sub-sampling factor = {}'.format(d))
@@ -72,11 +76,25 @@ def plot_sampling(img, Sampler):
     plt.ylabel("error")
     plt.show()
 
+    return reconstructed_list
+
+
+def plot_reconstructed(reconstructed_list):
+
+    fig,axs = plt.subplots(4, 2)
+    for i, reconstructed_img in enumerate(reconstructed_list):
+        axs[i%4,int(i/4)].imshow(reconstructed_img,'gray', vmin = 0, vmax = 255)
+        axs[i%4,int(i/4)].set_title('sub-sampling factor = {}'.format((2**(i+1))))
+
+    plt.show()
 
 if __name__ == '__main__':
     img_path = './HW1/lena_gray.gif'
     img = plt.imread(img_path)
     grayscale_img = img[:,:,0]
 
-    plot_sampling(grayscale_img, MSESubSampler)
-    plot_sampling(grayscale_img, MADSubSampler)
+    MSE_reconstructed_list = plot_sampling(grayscale_img, MSESubSampler)
+    MAD_reconstructed_list = plot_sampling(grayscale_img, MADSubSampler)
+
+    plot_reconstructed(MSE_reconstructed_list)
+    plot_reconstructed(MAD_reconstructed_list)
