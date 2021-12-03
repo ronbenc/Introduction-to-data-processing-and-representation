@@ -53,8 +53,14 @@ class MADSubSampler(SubSampler):
         return error_sum,median
 
 def plot_MSE():
-    ...
-    
+    d_list = [2^i for i in range(1,9)]
+    fig,axs = plt.subplots(4, 2)
+    for i,bit in enumerate(d_list):
+        axs[i%4,int(i/4)].plot()
+        axs[i%4,int(i/4)].set_title('number of bits = {}'.format(bit))
+        axs[i%4,int(i/4)].set_xlabel('desicision levels')
+        axs[i%4,int(i/4)].set_ylabel('representation levels')
+
 def plot_MAD():
     ...
 
