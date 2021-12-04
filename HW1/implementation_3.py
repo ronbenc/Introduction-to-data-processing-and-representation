@@ -59,31 +59,38 @@ if __name__ == '__main__':
 
     signal = grayscale_img/255
 
-    epsilon_list = [10**k for k in range(-4, 4)]
+    epsilon_list = [k/2 for k in range(-12, 6)]
     
     for k in range(1, 9):
         N = 2**k
         error_list = []
 
+        mad_subsampler = MADSubSampler(grayscale_img, 2**(9-k))
+        mad_subsampler.subsample()
         for epsilon in epsilon_list:
 
-            irls = IRLS(signal, N, epsilon, p=1)
+            irls = IRLS(signal, N, 10**epsilon, p=1)
             irls.workflow()
 
-            mad_subsampler = MADSubSampler(grayscale_img, 2**(9-k))
-            mad_subsampler.subsample()
+            
 
             error = ((irls.g-mad_subsampler.reconstructed_img)**2).sum()/len(irls.g.ravel())
             error_list.append(error)
         plt.plot(epsilon_list,error_list)
-        plt.title('MSE for Epsilon')
+        plt.title('MSE of the appoximated solution to L1 with N ={}'.format(N))
         plt.xlabel('Epsilon')
         plt.ylabel('MSE')
         plt.show()
          
 
 
-        # # show diff between pics
-        # diff_pic = np.abs((irls.g*255)-mad_subsampler.reconstructed_img)
-        # plt.imshow(diff_pic, 'gray', vmin = 0)
-        # plt.show()
+    # # show diff between pics
+    # mad_subsampler = MADSubSampler(grayscale_img, 2)
+    # mad_subsampler.subsample()
+
+    # irls = IRLS(signal, 256, 0.01, p=1)
+    # irls.workflow()
+    # diff_pic = (np.abs((irls.g*255)-mad_subsampler.reconstructed_img))
+    # plt.imshow(diff_pic, 'gray', vmin = 0)
+    # plt.title("pixel difference between L1 and approximated solution")
+    # plt.show()
