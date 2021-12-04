@@ -59,20 +59,31 @@ if __name__ == '__main__':
 
     signal = grayscale_img/255
 
+    epsilon_list = [10**k for k in range(-4, 4)]
     
     for k in range(1, 9):
         N = 2**k
+        error_list = []
 
-        irls = IRLS(signal, N, 0.001, p=1)
-        irls.workflow()
+        for epsilon in epsilon_list:
 
-        mad_subsampler = MADSubSampler(grayscale_img, 2**(9-k))
-        mad_subsampler.subsample()
+            irls = IRLS(signal, N, epsilon, p=1)
+            irls.workflow()
 
+            mad_subsampler = MADSubSampler(grayscale_img, 2**(9-k))
+            mad_subsampler.subsample()
 
-        fig, axs = plt.subplots(1, 2)
-
-        axs[0].imshow(irls.g,'gray',vmin=0,vmax=1)
-        axs[0].set_title("IRLS")
-        axs[1].imshow(mad_subsampler.reconstructed_img,'gray',vmin=0,vmax=255)
+            error = ((irls.g-mad_subsampler.reconstructed_img)**2).sum()/len(irls.g.ravel())
+            error_list.append(error)
+        plt.plot(epsilon_list,error_list)
+        plt.title('MSE for Epsilon')
+        plt.xlabel('Epsilon')
+        plt.ylabel('MSE')
         plt.show()
+         
+
+
+        # # show diff between pics
+        # diff_pic = np.abs((irls.g*255)-mad_subsampler.reconstructed_img)
+        # plt.imshow(diff_pic, 'gray', vmin = 0)
+        # plt.show()
