@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from matplotlib import pyplot as plt
-import utils
+from scipy.special import lambertw
 
 class Phi:
     """A class to represent the given function phi"""
@@ -57,20 +57,18 @@ class ApproximatePhi:
         self.val_range = self.val_high - self.val_low
 
     def _approximate_phi_vertical_derivative(self):
-        #TODO change to n_x*n_y matrix. deriviate cyclicly
-        self.approximated_phi_vertical_derivative = np.zeros((self.n_x, self.n_y - 1))
+        self.approximated_phi_vertical_derivative = np.zeros((self.n_x, self.n_y))
         for x in range(self.n_x):
-            for y in range(self.n_y - 1):
+            for y in range(self.n_y):
                 self.approximated_phi_vertical_derivative[x, y] = \
-                    ((self.approximated_phi[x, y + 1] - self.approximated_phi[x, y])*self.n_y)
+                    ((self.approximated_phi[x, (y + 1) % self.n_y] - self.approximated_phi[x, y])*self.n_y) # phi is cyclic for T=1
 
     def _approximate_phi_horizontal_derivative(self):
-        #TODO change to n_x*n_y matrix. deriviate cyclicly
-        self.approximated_phi_horizontal_derivative = np.zeros((self.n_x - 1, self.n_y))
+        self.approximated_phi_horizontal_derivative = np.zeros((self.n_x, self.n_y))
         for y in range(self.n_y):
-            for x in range(self.n_x - 1):
+            for x in range(self.n_x):
                 self.approximated_phi_horizontal_derivative[x, y] = \
-                    ((self.approximated_phi[x + 1, y] - self.approximated_phi[x, y])*self.n_x)
+                    ((self.approximated_phi[(x + 1) % self.n_x, y] - self.approximated_phi[x, y])*self.n_x) # phi is cyclic for T=1
 
     def approximate_vertical_derivative_energy(self):
         self._approximate_phi_vertical_derivative()
@@ -82,7 +80,7 @@ class ApproximatePhi:
 
 if __name__ == '__main__':
     phi1 = Phi(2500, 2, 7)
-    aprox_phi1 = ApproximatePhi(phi1, 2000, 7000)
+    aprox_phi1 = ApproximatePhi(phi1, 1000, 3500)
     # aprox_img = aprox_phi1.approximated_phi
     # plt.imshow(aprox_img, 'gray', vmin = -phi1.A, vmax = phi1.A)
     # plt.title("Approximated phi for {}*{} samples".format(aprox_phi1.n_x, aprox_phi1.n_y))
@@ -93,3 +91,6 @@ if __name__ == '__main__':
 
     aprox_phi1.approximate_horizontal_derivative_energy()
     print(aprox_phi1.approximated_horizontal_derivative_energy)
+
+    aprox_phi1.approximate_val_range()
+    print(aprox_phi1.val_range)
