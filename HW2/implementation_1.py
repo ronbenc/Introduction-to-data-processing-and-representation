@@ -92,21 +92,28 @@ class BitAllocator:
         b_error = (1/12)*(self.aprox_phi.val_range**2)/(4**b)
         return x_error + y_error + b_error
 
-    def search_params(self) -> tuple((int, int, int)):
+    def search_params(self) -> tuple((float, float, float)):
         min_error = float('inf')
         best_params = None
-        for n_x in range(1, self.B):
-            for n_y in range(1, int(self.B/n_x)):
-                b = min(int(self.B/(n_x*n_y)), 100)
+        for n_x in np.linspace(1, int(self.B), int(self.B*10)):
+            for n_y in np.linspace(1, int(self.B/n_x), int((self.B/n_x)*10)):
+                b = min(self.B/(n_x*n_y), 100)
                 curr_error = self.calc_MSE(n_x, n_y, b)
                 if curr_error < min_error:
                     min_error = curr_error
                     best_params = (n_x, n_y, b)
-                    print((n_x, n_y, b), min_error)
 
         return best_params
 
+    def calc_params(self) -> tuple((float, float, float)):
+        sqrt_energy = np.sqrt(self.aprox_phi.approximated_horizontal_derivative_energy*self.aprox_phi.approximated_vertical_derivative_energy)
+        b = (1/2)*np.log2(self.B*np.log(4)*((self.aprox_phi.val_range**2)/(2*sqrt_energy)))
 
+        sqrt_c = np.sqrt(self.B/b)
+        n_x = np.power((self.aprox_phi.approximated_horizontal_derivative_energy/self.aprox_phi.approximated_vertical_derivative_energy), (1/4))*sqrt_c
+        n_y = np.power((self.aprox_phi.approximated_vertical_derivative_energy/self.aprox_phi.approximated_horizontal_derivative_energy), (1/4))*sqrt_c
+
+        return (n_x, n_y, b)
 
 
 def run_sections(A: float, w_x: float, w_y: float, hor_samples: int, ver_samples: int):
@@ -127,8 +134,10 @@ def run_sections(A: float, w_x: float, w_y: float, hor_samples: int, ver_samples
 
     bit_allocator = BitAllocator(5000, aprox_phi)
     print(bit_allocator.search_params())
+    print(bit_allocator.calc_params())
 
 
 
 if __name__ == '__main__':
     run_sections(2500, 2, 7, 1000, 1000)
+    run_sections(2500, 7, 2, 1000, 1000)
