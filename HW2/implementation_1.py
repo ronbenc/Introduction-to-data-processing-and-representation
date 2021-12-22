@@ -1,7 +1,7 @@
 import math
 import numpy as np
 from matplotlib import pyplot as plt
-from scipy.special import lambertw
+import cv2
 
 class Phi:
     """A class to represent the given function phi"""
@@ -30,20 +30,24 @@ class ApproximatePhi:
 
     def __init__(self, phi: Phi, hor_samples: int, ver_samples: int) -> None:
         self.phi = phi
-        self.n_x = hor_samples
-        self.n_y = ver_samples
+        self.hor_samples = hor_samples
+        self.ver_samples = ver_samples
 
         # values caculated numericaly  
         self._approximate_phi()
         self.val_high = 0
         self.val_low = 0
+
+        self.approximate_val_range()
+        self.approximate_vertical_derivative_energy()
+        self.approximate_horizontal_derivative_energy()
         
 
     def _approximate_phi(self) -> np.array:
-        self.approximated_phi = np.zeros((self.n_x, self.n_y))
-        for x in range(self.n_x):
-            for y in range(self.n_y):
-                self.approximated_phi[x, y] = self.phi.compute((x/self.n_x), (y/self.n_y))
+        self.approximated_phi = np.empty((self.hor_samples, self.ver_samples))
+        for x in range(self.hor_samples):
+            for y in range(self.ver_samples):
+                self.approximated_phi[x, y] = self.phi.compute((x/self.hor_samples), (y/self.ver_samples))
     
     def _approximate_val_high(self):
         self.val_high = np.amax(self.approximated_phi)
@@ -57,44 +61,74 @@ class ApproximatePhi:
         self.val_range = self.val_high - self.val_low
 
     def _approximate_phi_vertical_derivative(self):
-        self.approximated_phi_vertical_derivative = np.zeros((self.n_x, self.n_y))
-        for x in range(self.n_x):
-            for y in range(self.n_y):
+        self.approximated_phi_vertical_derivative = np.zeros((self.hor_samples, self.ver_samples))
+        for x in range(self.hor_samples):
+            for y in range(self.ver_samples):
                 self.approximated_phi_vertical_derivative[x, y] = \
-                    ((self.approximated_phi[x, (y + 1) % self.n_y] - self.approximated_phi[x, y])*self.n_y) # phi is cyclic for T=1
+                    ((self.approximated_phi[x, (y + 1) % self.ver_samples] - self.approximated_phi[x, y])*self.ver_samples) # phi is cyclic for T=1
 
     def _approximate_phi_horizontal_derivative(self):
-        self.approximated_phi_horizontal_derivative = np.zeros((self.n_x, self.n_y))
-        for y in range(self.n_y):
-            for x in range(self.n_x):
+        self.approximated_phi_horizontal_derivative = np.zeros((self.hor_samples, self.ver_samples))
+        for y in range(self.ver_samples):
+            for x in range(self.hor_samples):
                 self.approximated_phi_horizontal_derivative[x, y] = \
-                    ((self.approximated_phi[(x + 1) % self.n_x, y] - self.approximated_phi[x, y])*self.n_x) # phi is cyclic for T=1
+                    ((self.approximated_phi[(x + 1) % self.hor_samples, y] - self.approximated_phi[x, y])*self.hor_samples) # phi is cyclic for T=1
 
     def approximate_vertical_derivative_energy(self):
         self._approximate_phi_vertical_derivative()
-        self.approximated_vertical_derivative_energy = np.sum(self.approximated_phi_vertical_derivative**2)/(self.n_x * self.n_y)
+        self.approximated_vertical_derivative_energy = np.sum(self.approximated_phi_vertical_derivative**2)/(self.hor_samples * self.ver_samples)
 
     def approximate_horizontal_derivative_energy(self):
         self._approximate_phi_horizontal_derivative()
-        self.approximated_horizontal_derivative_energy = np.sum(self.approximated_phi_horizontal_derivative**2)/(self.n_x * self.n_y)
+        self.approximated_horizontal_derivative_energy = np.sum(self.approximated_phi_horizontal_derivative**2)/(self.hor_samples * self.ver_samples)
+class BitAllocator:
+    def __init__(self, B: int, aprox_phi: ApproximatePhi) -> None:
+        self.B = B
+        self.aprox_phi = aprox_phi
+    
+    def calc_MSE(self, n_x, n_y, b):
+        x_error = (1/12)*self.aprox_phi.approximated_horizontal_derivative_energy/(n_x**2)
+        y_error = (1/12)*self.aprox_phi.approximated_vertical_derivative_energy/(n_y**2)
+        b_error = (1/12)*(self.aprox_phi.val_range**2)/(4**b)
+        return x_error + y_error + b_error
+
+    def search_params(self) -> tuple((int, int, int)):
+        min_error = float('inf')
+        best_params = None
+        for n_x in range(1, self.B):
+            for n_y in range(1, int(self.B/n_x)):
+                b = min(int(self.B/(n_x*n_y)), 100)
+                curr_error = self.calc_MSE(n_x, n_y, b)
+                if curr_error < min_error:
+                    min_error = curr_error
+                    best_params = (n_x, n_y, b)
+                    print((n_x, n_y, b), min_error)
+
+        return best_params
+
+
+
 
 def run_sections(A: float, w_x: float, w_y: float, hor_samples: int, ver_samples: int):
     phi = Phi(A, w_x, w_y)
     aprox_phi = ApproximatePhi(phi, hor_samples, ver_samples)
-    # aprox_img = aprox_phi.approximated_phi
+    aprox_img = aprox_phi.approximated_phi
+    # cv2.imshow('aproximated phi', aprox_img)
+    # cv2.waitKey(0)
     # plt.imshow(aprox_img, 'gray', vmin = -phi.A, vmax = phi.A)
     # plt.title("Approximated phi for {}*{} samples".format(aprox_phi.hor_samples, aprox_phi.ver_samples))
     # plt.show()
 
-    aprox_phi.approximate_vertical_derivative_energy()
     print("approximated vertical derivative energy: {}".format(aprox_phi.approximated_vertical_derivative_energy))
 
-    aprox_phi.approximate_horizontal_derivative_energy()
     print("approximated horizontal derivative energy: {}".format(aprox_phi.approximated_horizontal_derivative_energy))
 
-    aprox_phi.approximate_val_range()
     print("approximated value range: {}".format(aprox_phi.val_range))
+
+    bit_allocator = BitAllocator(5000, aprox_phi)
+    print(bit_allocator.search_params())
+
 
 
 if __name__ == '__main__':
-    run_sections(2500, 2, 7, 200, 700)
+    run_sections(2500, 2, 7, 1000, 1000)
