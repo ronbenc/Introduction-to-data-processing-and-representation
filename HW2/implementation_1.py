@@ -28,10 +28,10 @@ class Phi:
 class ApproximatePhi:
     """A class to represent the an approximation of the function phi"""
 
-    def __init__(self, phi: Phi, n_x: int, n_y: int) -> None:
+    def __init__(self, phi: Phi, hor_samples: int, ver_samples: int) -> None:
         self.phi = phi
-        self.n_x = n_x
-        self.n_y = n_y
+        self.n_x = hor_samples
+        self.n_y = ver_samples
 
         # values caculated numericaly  
         self._approximate_phi()
@@ -78,19 +78,23 @@ class ApproximatePhi:
         self._approximate_phi_horizontal_derivative()
         self.approximated_horizontal_derivative_energy = np.sum(self.approximated_phi_horizontal_derivative**2)/(self.n_x * self.n_y)
 
-if __name__ == '__main__':
-    phi1 = Phi(2500, 2, 7)
-    aprox_phi1 = ApproximatePhi(phi1, 1000, 3500)
-    # aprox_img = aprox_phi1.approximated_phi
-    # plt.imshow(aprox_img, 'gray', vmin = -phi1.A, vmax = phi1.A)
-    # plt.title("Approximated phi for {}*{} samples".format(aprox_phi1.n_x, aprox_phi1.n_y))
+def run_sections(A: float, w_x: float, w_y: float, hor_samples: int, ver_samples: int):
+    phi = Phi(A, w_x, w_y)
+    aprox_phi = ApproximatePhi(phi, hor_samples, ver_samples)
+    # aprox_img = aprox_phi.approximated_phi
+    # plt.imshow(aprox_img, 'gray', vmin = -phi.A, vmax = phi.A)
+    # plt.title("Approximated phi for {}*{} samples".format(aprox_phi.hor_samples, aprox_phi.ver_samples))
     # plt.show()
 
-    aprox_phi1.approximate_vertical_derivative_energy()
-    print(aprox_phi1.approximated_vertical_derivative_energy)
+    aprox_phi.approximate_vertical_derivative_energy()
+    print("approximated vertical derivative energy: {}".format(aprox_phi.approximated_vertical_derivative_energy))
 
-    aprox_phi1.approximate_horizontal_derivative_energy()
-    print(aprox_phi1.approximated_horizontal_derivative_energy)
+    aprox_phi.approximate_horizontal_derivative_energy()
+    print("approximated horizontal derivative energy: {}".format(aprox_phi.approximated_horizontal_derivative_energy))
 
-    aprox_phi1.approximate_val_range()
-    print(aprox_phi1.val_range)
+    aprox_phi.approximate_val_range()
+    print("approximated value range: {}".format(aprox_phi.val_range))
+
+
+if __name__ == '__main__':
+    run_sections(2500, 2, 7, 200, 700)
