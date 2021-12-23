@@ -9,10 +9,11 @@ class Matrix:
         self.matrix = np.empty((self.size, self.size))
     
     def plot_columns(self):
-        x_axis = [x/self.size for x in range(0, self.size)]
+        x_axis = [x/self.size for x in range(0, self.size+1)]
         fig,axs = plt.subplots(self.size)
+        tmp_mat = np.vstack((self.matrix[0, :], self.matrix)) #TODO resove this more elegantly
         for i in range(self.size):
-            axs[i].step(x_axis, self.matrix[:, i]) #how to plot with bars
+            axs[i].step(x_axis, tmp_mat[:, i]) #how to plot with bars
         
         plt.show()
         
@@ -28,6 +29,8 @@ class Hadamard(Matrix):
         
         else:
             prev_matrix = Hadamard(n-1).matrix
+            # Hadamard2matrix = Hadamard(1).matrix
+            # self.matrix = np.kron(Hadamard2matrix, prev_matrix)
             self.matrix[0: int(self.size/2), 0: int(self.size/2)] = prev_matrix
             self.matrix[0: int(self.size/2), int(self.size/2): self.size] = prev_matrix
             self.matrix[int(self.size/2): self.size, 0: int(self.size/2)] = prev_matrix
@@ -73,13 +76,17 @@ class Haar(Matrix):
             upper_haar = (1/math.sqrt(2))*np.kron(prev_haar.matrix, np.array([1, 1]))
             lower_haar = (1/math.sqrt(2))*np.kron(np.identity(prev_haar.size), np.array([1, -1]))
             self.matrix = np.vstack((upper_haar, lower_haar))
-    
 
+class Phi:
+    pass
 
 if __name__ == '__main__':
-    # hadamard = Hadamard(2)
-    # hadamard.plot_columns()
-    # walsh_hadamard = WalshHadamard(hadamard)
-    # walsh_hadamard.plot_columns()
+    hadamard = Hadamard(2)
+    hadamard.plot_columns()
+    print(hadamard.matrix)
+    walsh_hadamard = WalshHadamard(hadamard)
+    walsh_hadamard.plot_columns()
+    print(walsh_hadamard.matrix)
     haar = Haar(2)
     print(haar.matrix)
+    haar.plot_columns()
