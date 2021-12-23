@@ -61,34 +61,34 @@ class ApproximatePhi:
         self.val_range = self.val_high - self.val_low
 
     def _approximate_phi_vertical_derivative(self):
-        self.approximated_phi_vertical_derivative = np.zeros((self.hor_samples, self.ver_samples))
+        self.ver_derivative = np.zeros((self.hor_samples, self.ver_samples))
         for x in range(self.hor_samples):
             for y in range(self.ver_samples):
-                self.approximated_phi_vertical_derivative[x, y] = \
+                self.ver_derivative[x, y] = \
                     ((self.approximated_phi[x, (y + 1) % self.ver_samples] - self.approximated_phi[x, y])*self.ver_samples) # phi is cyclic for T=1
 
     def _approximate_phi_horizontal_derivative(self):
-        self.approximated_phi_horizontal_derivative = np.zeros((self.hor_samples, self.ver_samples))
+        self.hor_derivative = np.zeros((self.hor_samples, self.ver_samples))
         for y in range(self.ver_samples):
             for x in range(self.hor_samples):
-                self.approximated_phi_horizontal_derivative[x, y] = \
+                self.hor_derivative[x, y] = \
                     ((self.approximated_phi[(x + 1) % self.hor_samples, y] - self.approximated_phi[x, y])*self.hor_samples) # phi is cyclic for T=1
 
     def approximate_vertical_derivative_energy(self):
         self._approximate_phi_vertical_derivative()
-        self.approximated_vertical_derivative_energy = np.sum(self.approximated_phi_vertical_derivative**2)/(self.hor_samples * self.ver_samples)
+        self.ver_derivative_energy = np.sum(self.ver_derivative**2)/(self.hor_samples * self.ver_samples)
 
     def approximate_horizontal_derivative_energy(self):
         self._approximate_phi_horizontal_derivative()
-        self.approximated_horizontal_derivative_energy = np.sum(self.approximated_phi_horizontal_derivative**2)/(self.hor_samples * self.ver_samples)
+        self.hor_derivative_energy = np.sum(self.hor_derivative**2)/(self.hor_samples * self.ver_samples)
 class BitAllocator:
     def __init__(self, B: int, aprox_phi: ApproximatePhi) -> None:
         self.B = B
         self.aprox_phi = aprox_phi
     
     def calc_MSE(self, n_x, n_y, b):
-        x_error = (1/12)*self.aprox_phi.approximated_horizontal_derivative_energy/(n_x**2)
-        y_error = (1/12)*self.aprox_phi.approximated_vertical_derivative_energy/(n_y**2)
+        x_error = (1/12)*self.aprox_phi.hor_derivative_energy/(n_x**2)
+        y_error = (1/12)*self.aprox_phi.ver_derivative_energy/(n_y**2)
         b_error = (1/12)*(self.aprox_phi.val_range**2)/(4**b)
         return x_error + y_error + b_error
 
@@ -106,12 +106,12 @@ class BitAllocator:
         return best_params
 
     def calc_params(self) -> tuple((float, float, float)):
-        sqrt_energy = np.sqrt(self.aprox_phi.approximated_horizontal_derivative_energy*self.aprox_phi.approximated_vertical_derivative_energy)
+        sqrt_energy = np.sqrt(self.aprox_phi.hor_derivative_energy*self.aprox_phi.ver_derivative_energy)
         b = (1/2)*np.log2(self.B*np.log(4)*((self.aprox_phi.val_range**2)/(2*sqrt_energy)))
 
         sqrt_c = np.sqrt(self.B/b)
-        n_x = np.power((self.aprox_phi.approximated_horizontal_derivative_energy/self.aprox_phi.approximated_vertical_derivative_energy), (1/4))*sqrt_c
-        n_y = np.power((self.aprox_phi.approximated_vertical_derivative_energy/self.aprox_phi.approximated_horizontal_derivative_energy), (1/4))*sqrt_c
+        n_x = np.power((self.aprox_phi.hor_derivative_energy/self.aprox_phi.ver_derivative_energy), (1/4))*sqrt_c
+        n_y = np.power((self.aprox_phi.ver_derivative_energy/self.aprox_phi.hor_derivative_energy), (1/4))*sqrt_c
 
         return (n_x, n_y, b)
 
@@ -126,9 +126,9 @@ def run_sections(A: float, w_x: float, w_y: float, hor_samples: int, ver_samples
     # plt.title("Approximated phi for {}*{} samples".format(aprox_phi.hor_samples, aprox_phi.ver_samples))
     # plt.show()
 
-    print("approximated vertical derivative energy: {}".format(aprox_phi.approximated_vertical_derivative_energy))
+    print("approximated vertical derivative energy: {}".format(aprox_phi.ver_derivative_energy))
 
-    print("approximated horizontal derivative energy: {}".format(aprox_phi.approximated_horizontal_derivative_energy))
+    print("approximated horizontal derivative energy: {}".format(aprox_phi.hor_derivative_energy))
 
     print("approximated value range: {}".format(aprox_phi.val_range))
 

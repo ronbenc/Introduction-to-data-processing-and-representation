@@ -23,7 +23,7 @@ class Hadamard(Matrix):
         if n == 0:
             self.matrix = np.matrix([1])
 
-        elif n == 1:
+        elif n == 1: 
             self.matrix = (1/math.sqrt(2))*np.matrix([[1, 1], [1, -1]]) #should we normalize?
         
         else:
@@ -65,10 +65,21 @@ class WalshHadamard(Matrix):
 class Haar(Matrix):
     def __init__(self, n: int) -> None:
         super().__init__(n)
-        
+        if n == 0:
+            self.matrix = np.matrix([1])
+
+        else:
+            prev_haar = Haar(n-1)
+            upper_haar = (1/math.sqrt(2))*np.kron(prev_haar.matrix, np.array([1, 1]))
+            lower_haar = (1/math.sqrt(2))*np.kron(np.identity(prev_haar.size), np.array([1, -1]))
+            self.matrix = np.vstack((upper_haar, lower_haar))
+    
+
 
 if __name__ == '__main__':
-    hadamard = Hadamard(2)
-    hadamard.plot_columns()
-    walsh_hadamard = WalshHadamard(hadamard)
-    walsh_hadamard.plot_columns()
+    # hadamard = Hadamard(2)
+    # hadamard.plot_columns()
+    # walsh_hadamard = WalshHadamard(hadamard)
+    # walsh_hadamard.plot_columns()
+    haar = Haar(2)
+    print(haar.matrix)
