@@ -152,7 +152,7 @@ def create_basis(matrix: Matrix, sum_range: float, N: int):
 
 if __name__ == '__main__':
     hadamard = Hadamard(2)
-    # hadamard.plot_columns()
+    hadamard.plot_columns()
     print(hadamard.matrix)
     # walsh_hadamard = WalshHadamard(hadamard)
     # walsh_hadamard.plot_columns()

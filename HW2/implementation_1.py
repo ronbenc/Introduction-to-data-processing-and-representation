@@ -1,6 +1,7 @@
 import math
 import numpy as np
 from matplotlib import pyplot as plt
+from skimage.measure import block_reduce
 import cv2
 
 class Phi:
@@ -115,29 +116,96 @@ class BitAllocator:
 
         return (n_x, n_y, b)
 
+    def round_to_opt_params(self, b) -> tuple((int, int, int)):
+        b_f = int(np.floor(b))
+        b_c = int(np.ceil(b))
+        best_params = None
+        min_error = float('inf')
+
+        for b in [b_f, b_c]:
+            for n_x in range(1, int(self.B/b)+1):
+                n_y = int((self.B/b)/n_x)
+                curr_error = self.calc_MSE(n_x, n_y, b)
+                if curr_error < min_error:
+                    min_error = curr_error
+                    best_params = (n_x, n_y, b)
+
+        return best_params
+
+class Reconstarctor:
+    def __init__(self, img, n_x, n_y, b) -> None:
+        self.img = img
+        self.n_x = n_x
+        self.n_y = n_y
+        self.b = b
+
+        self.img_shape = img.shape
+        self.val_low = np.min(img)
+        self.val_high = np.max(img)
+
+        self.q_samples = 2**b
+
+        self.delta = (self.val_high - self.val_low)/self.q_samples
+
+        self.recontructed_img = np.zeros(img.shape)
+    
+    def recontruct(self):
+        y_step = int(self.img_shape[0]/self.n_y)
+        x_step = int(self.img_shape[1]/self.n_x)
+        reduced_img = block_reduce(self.img, block_size=(y_step, x_step), func=np.mean)
+        resized_img = cv2.resize(reduced_img, self.img.shape, interpolation=cv2.INTER_NEAREST)
+        self.recontructed_img = self.uniform_quantize_function(self.val_low, self.delta, resized_img)
+
+        # for row in range(self.n_y):
+        #     for col in range(self.n_x):
+        #         # print(row*y_step, (row+1)*y_step)
+        #         # print(col*x_step, (col+1)*x_step)
+        #         value = self.img[row*y_step: (row+1)*y_step, col*x_step: (col+1)*x_step].mean()
+                    
+        #         # self.subsampled_img = value
+        #         self.recontructed_img[row*y_step: (row+1)*y_step, col*x_step: (col+1)*x_step] = self.uniform_quantize_function(self.val_low, self.delta, value)
+
+    @staticmethod
+    def uniform_quantize_function(low, delta, x):
+        return low+((np.floor(((x-low)/delta))+(1/2))*delta)
+
+
 
 def run_sections(A: float, w_x: float, w_y: float, hor_samples: int, ver_samples: int):
     phi = Phi(A, w_x, w_y)
     aprox_phi = ApproximatePhi(phi, hor_samples, ver_samples)
     aprox_img = aprox_phi.approximated_phi
-    # cv2.imshow('aproximated phi', aprox_img)
-    # cv2.waitKey(0)
-    # plt.imshow(aprox_img, 'gray', vmin = -phi.A, vmax = phi.A)
-    # plt.title("Approximated phi for {}*{} samples".format(aprox_phi.hor_samples, aprox_phi.ver_samples))
-    # plt.show()
+    plt.imshow(aprox_img, 'gray', vmin = -phi.A, vmax = phi.A)
+    plt.title("Approximated phi for {}*{} samples".format(aprox_phi.hor_samples, aprox_phi.ver_samples))
+    plt.show()
 
     print("approximated vertical derivative energy: {}".format(aprox_phi.ver_derivative_energy))
-
     print("approximated horizontal derivative energy: {}".format(aprox_phi.hor_derivative_energy))
-
     print("approximated value range: {}".format(aprox_phi.val_range))
 
-    bit_allocator = BitAllocator(5000, aprox_phi)
-    print(bit_allocator.search_params())
-    print(bit_allocator.calc_params())
+    for B in [5000, 50000]:
+        bit_allocator = BitAllocator(B, aprox_phi)
+        calculated_params = bit_allocator.calc_params()
+        opt_params = bit_allocator.round_to_opt_params(calculated_params[2])
+        print("Nx, Ny and b obtained by optimizing the bit-allocation for budget = {} are: {}, {} and {}".format(B, calculated_params[0], calculated_params[1], calculated_params[2]))
+        reconstructor = Reconstarctor(aprox_img, opt_params[0], opt_params[1], opt_params[2])
+        reconstructor.recontruct()
+        plt.imshow(reconstructor.recontructed_img, 'gray')
+        plt.title("Reconstructed image for {}".format(opt_params))
+        plt.show()
 
+    for B in [5000, 50000]:
+        bit_allocator = BitAllocator(B, aprox_phi)
+        evaluated_params = bit_allocator.search_params()
+        opt_params = bit_allocator.round_to_opt_params(evaluated_params[2])
+        print("Nx, Ny and b obtained s by practically evaluating the bit-allocation MSE for many combinations of parameters for budget = {} are: {}, {} and {}".format(B, evaluated_params[0], evaluated_params[1], evaluated_params[2]))
+        reconstructor = Reconstarctor(aprox_img, opt_params[0], opt_params[1], opt_params[2])
+        reconstructor.recontruct()
+        plt.imshow(reconstructor.recontructed_img, 'gray')
+        plt.title("Reconstructed image for {}".format(opt_params))
+        plt.show()
 
 
 if __name__ == '__main__':
-    run_sections(2500, 2, 7, 1000, 1000)
-    run_sections(2500, 7, 2, 1000, 1000)
+    run_sections(2500, 2, 7, 512, 512)
+    run_sections(2500, 7, 2, 512, 512)
